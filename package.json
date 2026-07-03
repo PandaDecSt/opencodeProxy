@@ -1,0 +1,26 @@
+{
+  "name": "opencode-proxy",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "tsx watch src/main.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^4.0.7",
+    "@ai-sdk/openai-compatible": "^3.0.5",
+    "@ai-sdk/provider": "^0.0.26",
+    "@ai-sdk/provider-utils": "^1.0.0",
+    "@effect/platform": "^0.68.6",
+    "@effect/platform-node": "^0.63.0",
+    "ai": "^7.0.14",
+    "effect": "^3.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

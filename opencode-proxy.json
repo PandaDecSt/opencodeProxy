@@ -1,0 +1,17 @@
+{
+  "port": 9090,
+  "host": "127.0.0.1",
+  "defaultModel": "big-pickle",
+  "modelMappings": [
+    { "externalId": "big-pickle", "providerId": "opencode-zen", "modelId": "big-pickle", "displayName": "Big Pickle (Free)" },
+    { "externalId": "deepseek-v4-flash-free", "providerId": "opencode-zen", "modelId": "deepseek-v4-flash-free", "displayName": "DeepSeek V4 Flash Free" },
+    { "externalId": "mimo-v2.5-free", "providerId": "opencode-zen", "modelId": "mimo-v2.5-free", "displayName": "MiMo V2.5 Free" },
+    { "externalId": "nemotron-3-ultra-free", "providerId": "opencode-zen", "modelId": "nemotron-3-ultra-free", "displayName": "Nemotron 3 Ultra Free" },
+    { "externalId": "north-mini-code-free", "providerId": "opencode-zen", "modelId": "north-mini-code-free", "displayName": "North Mini Code Free" },
+    { "externalId": "gpt-5-nano", "providerId": "opencode-zen", "modelId": "gpt-5-nano", "displayName": "GPT-5 Nano (Free)" },
+    { "externalId": "deepseek-v4-flash", "providerId": "opencode-zen", "modelId": "deepseek-v4-flash", "displayName": "DeepSeek V4 Flash" }
+  ],
+  "providers": {
+    "opencode-zen": { "apiKey": "" }
+  }
+}
