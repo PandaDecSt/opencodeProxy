@@ -394,7 +394,7 @@ curl -X POST http://127.0.0.1:9090/v1/chat/completions \
 
 ## 7. 配置文件说明
 
-`opencode-proxy.json` 示例：
+### 7.1 主配置 `opencode-proxy.json`
 
 ```json
 {
@@ -415,15 +415,78 @@ curl -X POST http://127.0.0.1:9090/v1/chat/completions \
 }
 ```
 
-### 配置项说明
+### 7.2 日志配置 `log-config.json`（热插拔）
+
+```json
+{
+  "enabled": true,
+  "console": {
+    "request": true,
+    "response": true,
+    "error": true,
+    "toolCalls": true,
+    "reasoning": true,
+    "headers": false,
+    "timing": true
+  },
+  "file": {
+    "enabled": true,
+    "path": "logs/proxy.log",
+    "request": true,
+    "response": true,
+    "error": true
+  },
+  "filter": {
+    "maxMessageLength": 500,
+    "maxReasoningLength": 300,
+    "sanitizeFields": ["apiKey", "authorization"]
+  }
+}
+```
 
 | 字段 | 说明 |
 |------|------|
-| `port` | 代理监听端口 |
-| `host` | 监听地址 |
-| `defaultModel` | 默认模型 ID |
-| `modelMappings` | 模型映射表 |
-| `providers` | Provider 配置（可选 API Key） |
+| `enabled` | 全局日志开关 |
+| `console.request` | 控制台显示请求详情 |
+| `console.response` | 控制台显示响应内容 |
+| `console.error` | 控制台显示错误信息 |
+| `console.toolCalls` | 控制台显示工具调用详情 |
+| `console.reasoning` | 控制台显示思考过程 |
+| `console.headers` | 控制台显示请求头 |
+| `console.timing` | 控制台显示耗时信息 |
+| `file.enabled` | 是否写入日志文件 |
+| `filter.maxMessageLength` | 消息截断长度 |
+| `filter.sanitizeFields` | 脱敏字段列表 |
+
+### 7.3 热插拔 API
+
+| 方法 | 端点 | 说明 |
+|------|------|------|
+| `GET` | `/admin/logs` | 获取当前日志配置 |
+| `PUT` | `/admin/logs` | 部分更新配置（合并） |
+| `POST` | `/admin/logs/toggle` | 全局开关（切换） |
+| `POST` | `/admin/logs/console/:key` | 切换控制台开关 |
+| `POST` | `/admin/logs/file/:key` | 切换文件开关 |
+
+**示例**：
+
+```bash
+# 获取配置
+curl http://127.0.0.1:9090/admin/logs
+
+# 关闭 reasoning 日志
+curl -X POST http://127.0.0.1:9090/admin/logs/console/reasoning \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+
+# 关闭所有控制台日志
+curl -X PUT http://127.0.0.1:9090/admin/logs \
+  -H "Content-Type: application/json" \
+  -d '{"console": {"request": false, "response": false}}'
+
+# 全局开关
+curl -X POST http://127.0.0.1:9090/admin/logs/toggle
+```
 
 ---
 

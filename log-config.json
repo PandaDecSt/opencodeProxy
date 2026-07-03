@@ -1,0 +1,27 @@
+{
+  "enabled": true,
+  "console": {
+    "request": true,
+    "response": true,
+    "error": true,
+    "toolCalls": true,
+    "reasoning": true,
+    "headers": false,
+    "timing": true
+  },
+  "file": {
+    "enabled": true,
+    "path": "logs/proxy.log",
+    "request": true,
+    "response": true,
+    "error": true
+  },
+  "filter": {
+    "maxMessageLength": 500,
+    "maxReasoningLength": 300,
+    "sanitizeFields": [
+      "apiKey",
+      "authorization"
+    ]
+  }
+}
