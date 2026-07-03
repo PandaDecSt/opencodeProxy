@@ -6,6 +6,7 @@ import { createProviderClient } from "./provider.js"
 import { findModelMapping, getDefaultModel } from "./config.js"
 import { createRequestLogger, type RequestLogger } from "./logger.js"
 import { storeOriginalToolDefs } from "./provider.js"
+import { parseBody, sendError } from "./utils.js"
 
 export type { RequestLogger }
 
@@ -86,21 +87,6 @@ export async function handleChatCompletions(req: IncomingMessage, res: ServerRes
   }
 
   return handleNonStreamingChat(res, languageModel, sdkMessages, { ...streamOpts, model: modelId }, logger, body)
-}
-
-function parseBody(req: IncomingMessage): Promise<any> {
-  return new Promise((resolve) => {
-    const chunks: Buffer[] = []
-    req.on("data", (chunk: Buffer) => chunks.push(chunk))
-    req.on("end", () => {
-      const raw = Buffer.concat(chunks).toString("utf8")
-      try {
-        resolve(raw ? JSON.parse(raw) : {})
-      } catch {
-        resolve({})
-      }
-    })
-  })
 }
 
 function convertMessages(messages: any[]): any[] {
@@ -344,9 +330,4 @@ async function handleNonStreamingChat(
     logger.logError(String(error))
     sendError(res, 500, String(error))
   }
-}
-
-function sendError(res: ServerResponse, status: number, message: string) {
-  res.writeHead(status, { "Content-Type": "application/json" })
-  res.end(JSON.stringify({ error: { message, type: "api_error", code: status } }))
 }
