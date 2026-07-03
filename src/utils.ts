@@ -1,19 +1,40 @@
 import { IncomingMessage, ServerResponse } from "node:http"
 
+const MAX_BODY_SIZE = 10 * 1024 * 1024 // 10MB
+
 /**
- * Parse request body as JSON
+ * Parse request body as JSON with size limit and error handling
  */
 export function parseBody(req: IncomingMessage): Promise<any> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const chunks: Buffer[] = []
-    req.on("data", (chunk: Buffer) => chunks.push(chunk))
+    let totalSize = 0
+
+    req.on("data", (chunk: Buffer) => {
+      totalSize += chunk.length
+      if (totalSize > MAX_BODY_SIZE) {
+        reject(new Error("Request body too large"))
+        req.destroy()
+        return
+      }
+      chunks.push(chunk)
+    })
+
     req.on("end", () => {
       const raw = Buffer.concat(chunks).toString("utf8")
-      try {
-        resolve(raw ? JSON.parse(raw) : {})
-      } catch {
+      if (!raw) {
         resolve({})
+        return
       }
+      try {
+        resolve(JSON.parse(raw))
+      } catch (e) {
+        reject(new Error("Invalid JSON in request body"))
+      }
+    })
+
+    req.on("error", (err) => {
+      reject(err)
     })
   })
 }
@@ -62,25 +83,11 @@ function getErrorType(status: number): string {
 export function sendJson(res: ServerResponse, status: number, data: any): void {
   if (res.writableEnded) return
   res.writeHead(status, { "Content-Type": "application/json" })
-  res.end(JSON.stringify(data))
+  try {
+    res.end(JSON.stringify(data))
+  } catch {
+    res.end(JSON.stringify({ error: "Failed to serialize response" }))
+  }
 }
 
-/**
- * Extract path parameters from URL pattern
- */
-export function extractParams(pattern: string, pathname: string): Record<string, string> | null {
-  const paramNames: string[] = []
-  const regexStr = pattern.replace(/:([^/]+)/g, (_, name) => {
-    paramNames.push(name)
-    return "([^/]+)"
-  })
-  const regex = new RegExp(`^${regexStr}$`)
-  const match = pathname.match(regex)
-  if (!match) return null
 
-  const params: Record<string, string> = {}
-  paramNames.forEach((name, i) => {
-    params[name] = decodeURIComponent(match[i + 1])
-  })
-  return params
-}

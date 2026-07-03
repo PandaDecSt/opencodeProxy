@@ -114,6 +114,7 @@ export interface ProxyConfig {
   defaultModel?: string
   requestTimeout?: number
   maxTokens?: number
+  adminApiKey?: string
 }
 
 /** 默认模型映射 - 可通过配置文件覆盖 */

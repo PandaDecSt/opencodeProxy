@@ -23,11 +23,20 @@ export class Router {
 
   private addRoute(method: HttpMethod | "*", path: string, handler: RouteHandler) {
     const paramNames: string[] = []
-    const patternStr = path.replace(/:([^/]+)/g, (_, name) => {
+    // Support wildcard * at the end of path
+    const isWildcard = path.endsWith("/*")
+    const cleanPath = isWildcard ? path.slice(0, -2) : path
+    
+    const patternStr = cleanPath.replace(/:([^/]+)/g, (_, name) => {
       paramNames.push(name)
       return "([^/]+)"
     })
-    const pattern = new RegExp(`^${patternStr}$`)
+    
+    // Build regex: exact match or prefix match for wildcards
+    const pattern = isWildcard
+      ? new RegExp(`^${patternStr}(/.*)?$`)
+      : new RegExp(`^${patternStr}$`)
+    
     this.routes.push({ method, pattern, paramNames, handler })
   }
 

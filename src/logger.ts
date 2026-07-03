@@ -73,6 +73,19 @@ export function createRequestLogger(method: string, path: string): RequestLogger
         console.log(`[${entry.timestamp}] REQUEST ${id}`)
         console.log(`${"─".repeat(60)}`)
         console.log(`Model: ${entry.model || "N/A"}`)
+        
+        // System prompt (supports both string and Anthropic array format)
+        if (body?.system) {
+          const systemText = typeof body.system === "string"
+            ? body.system
+            : Array.isArray(body.system)
+            ? body.system.map((b: any) => b.text || "").join("\n\n")
+            : ""
+          if (systemText) {
+            console.log(`System: ${manager.truncate(systemText, 200)}`)
+          }
+        }
+        
         console.log(`Messages:`)
         if (body?.messages) {
           for (const msg of body.messages) {
@@ -85,11 +98,14 @@ export function createRequestLogger(method: string, path: string): RequestLogger
         if (body?.tools && manager.shouldLog("toolCalls")) {
           console.log(`Tools (${body.tools.length}):`)
           for (const tool of body.tools) {
-            const fn = tool.function
-            console.log(`  - ${fn?.name}: ${fn?.description || "(no description)"}`)
-            if (fn?.parameters?.properties) {
-              const props = fn.parameters.properties
-              const required = fn.parameters.required || []
+            // Support both OpenAI format (tool.function) and Anthropic format (tool.name)
+            const name = tool.function?.name || tool.name || "unknown"
+            const desc = tool.function?.description || tool.description || "(no description)"
+            console.log(`  - ${name}: ${desc}`)
+            const params = tool.function?.parameters || tool.input_schema
+            if (params?.properties) {
+              const props = params.properties
+              const required = params.required || []
               for (const [key, val] of Object.entries(props) as any) {
                 const req = required.includes(key) ? "(required)" : "(optional)"
                 console.log(`      ${key} ${req}: ${val.type || "any"} - ${val.description || ""}`)
@@ -97,6 +113,7 @@ export function createRequestLogger(method: string, path: string): RequestLogger
             }
           }
         }
+        
         if (manager.shouldLog("timing")) {
           console.log(`Stream: ${body?.stream || false}`)
         }
@@ -121,6 +138,7 @@ export function createRequestLogger(method: string, path: string): RequestLogger
         console.log(`[${entry.timestamp}] RESPONSE ${id} (${duration}ms) [${status}]`)
         console.log(`${"─".repeat(60)}`)
 
+        // OpenAI format
         if (body?.choices) {
           for (const choice of body.choices) {
             if (choice.message?.content) {
@@ -144,8 +162,30 @@ export function createRequestLogger(method: string, path: string): RequestLogger
           }
         }
 
+        // Anthropic format
+        if (body?.type === "message" && body?.content) {
+          for (const block of body.content) {
+            if (block.type === "text") {
+              console.log(`Content: ${manager.truncate(block.text, 500)}`)
+            }
+            if (block.type === "thinking" && manager.shouldLog("reasoning")) {
+              console.log(`Reasoning: ${manager.truncateReasoning(block.thinking || "")}`)
+            }
+            if (block.type === "tool_use" && manager.shouldLog("toolCalls")) {
+              console.log(`Tool Call: ${block.name}(${JSON.stringify(block.input)})`)
+            }
+          }
+          if (body.stop_reason) {
+            console.log(`Stop: ${body.stop_reason}`)
+          }
+        }
+
+        // Usage (support both formats)
         if (body?.usage && manager.shouldLog("timing")) {
-          console.log(`Tokens: prompt=${body.usage.prompt_tokens} completion=${body.usage.completion_tokens} total=${body.usage.total_tokens}`)
+          const prompt = body.usage.prompt_tokens ?? body.usage.input_tokens ?? "?"
+          const completion = body.usage.completion_tokens ?? body.usage.output_tokens ?? "?"
+          const total = body.usage.total_tokens ?? (prompt !== "?" && completion !== "?" ? Number(prompt) + Number(completion) : "?")
+          console.log(`Tokens: prompt=${prompt} completion=${completion} total=${total}`)
         }
 
         console.log(`${"=".repeat(60)}\n`)

@@ -16,7 +16,7 @@ interface ProxyConfigFile {
   providers?: Record<string, ProviderApiKeyConfig>
 }
 
-// Store original tool definitions
+// Store original tool definitions per request
 const originalToolDefs = new Map<string, any>()
 
 export function storeOriginalToolDefs(tools: any[]) {
@@ -25,6 +25,10 @@ export function storeOriginalToolDefs(tools: any[]) {
       originalToolDefs.set(tool.function.name, tool)
     }
   }
+}
+
+export function clearOriginalToolDefs() {
+  originalToolDefs.clear()
 }
 
 // Intercept fetch to fix tool definitions before sending

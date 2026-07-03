@@ -20,7 +20,7 @@ export async function loadConfig(): Promise<ProxyConfig> {
   const configPaths = [
     resolve(process.cwd(), "opencode-proxy.json"),
     resolve(process.cwd(), ".opencode-proxy.json"),
-    resolve(process.env.HOME || "", ".config", "opencode-proxy.json"),
+    resolve(process.env.USERPROFILE || process.env.HOME || "", ".config", "opencode-proxy.json"),
   ]
 
   for (const path of configPaths) {
@@ -45,6 +45,9 @@ export function findModelMapping(externalId: string, config: ProxyConfig): Model
 }
 
 export function getDefaultModel(config: ProxyConfig): ModelMapping {
+  if (!config.modelMappings || config.modelMappings.length === 0) {
+    throw new Error("No model mappings configured")
+  }
   const mapping = config.modelMappings.find((m) => m.externalId === config.defaultModel)
   return mapping ?? config.modelMappings[0]
 }
